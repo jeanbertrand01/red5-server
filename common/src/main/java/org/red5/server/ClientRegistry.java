@@ -92,8 +92,8 @@ public class ClientRegistry implements IClientRegistry, ClientRegistryMXBean {
         }
     }
 
-    public Client getClient(String id) throws ClientNotFoundException {
-        Client result = (Client) clients.get(id);
+    public Red5Client getClient(String id) throws ClientNotFoundException {
+        Red5Client result = (Red5Client) clients.get(id);
         if (result == null) {
             throw new ClientNotFoundException(id);
         }
@@ -103,10 +103,10 @@ public class ClientRegistry implements IClientRegistry, ClientRegistryMXBean {
     /**
      * Returns a list of Clients.
      */
-    public ClientList<Client> getClientList() {
-        ClientList<Client> list = new ClientList<Client>();
+    public ClientList<Red5Client> getClientList() {
+        ClientList<Red5Client> list = new ClientList<Red5Client>();
         for (IClient c : clients.values()) {
-            list.add((Client) c);
+            list.add((Red5Client) c);
         }
         return list;
     }
@@ -184,7 +184,7 @@ public class ClientRegistry implements IClientRegistry, ClientRegistryMXBean {
     public IClient newClient(Object[] params) throws ClientNotFoundException, ClientRejectedException {
         // derive client id from the connection params or use next
         String id = nextId();
-        IClient client = new Client(id, this);
+        IClient client = new Red5Client(id, this);
         addClient(id, client);
         return client;
     }

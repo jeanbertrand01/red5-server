@@ -85,7 +85,7 @@ public class CoreHandler implements IScopeHandler, CoreHandlerMXBean {
                         if (conn instanceof RTMPTConnection) {
                             log.debug("Creating new client for RTMPT connection");
                             // create a new client using the session id as the client's id
-                            client = new Client(id, (ClientRegistry) clientRegistry);
+                            client = new Red5Client(id, (ClientRegistry) clientRegistry);
                             clientRegistry.addClient(client);
                             // set the client on the connection
                             conn.setClient(client);

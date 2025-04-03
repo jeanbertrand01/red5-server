@@ -35,9 +35,9 @@ import org.slf4j.LoggerFactory;
 /**
  * Client is an abstraction representing user connected to Red5 application. Clients are tied to connections and registered in ClientRegistry
  */
-public class Client extends AttributeStore implements IClient {
+public class Red5Client extends AttributeStore implements IClient {
 
-    protected static Logger log = LoggerFactory.getLogger(Client.class);
+    protected static Logger log = LoggerFactory.getLogger(Red5Client.class);
 
     /**
      * Name of connection attribute holding the permissions.
@@ -83,7 +83,7 @@ public class Client extends AttributeStore implements IClient {
      *            ClientRegistry
      */
     @ConstructorProperties({ "id", "registry" })
-    public Client(String id, ClientRegistry registry) {
+    public Red5Client(String id, ClientRegistry registry) {
         super();
         if (id != null) {
             this.id = id;
@@ -106,7 +106,7 @@ public class Client extends AttributeStore implements IClient {
      *            ClientRegistry
      */
     @ConstructorProperties({ "id", "creationTime", "registry" })
-    public Client(String id, Long creationTime, ClientRegistry registry) {
+    public Red5Client(String id, Long creationTime, ClientRegistry registry) {
         super();
         if (id != null) {
             this.id = id;
@@ -355,11 +355,11 @@ public class Client extends AttributeStore implements IClient {
      *            composite data
      * @return Client class instance
      */
-    public static Client from(CompositeData cd) {
-        Client instance = null;
+    public static Red5Client from(CompositeData cd) {
+        Red5Client instance = null;
         if (cd.containsKey("id")) {
             String id = (String) cd.get("id");
-            instance = new Client(id, (Long) cd.get("creationTime"), null);
+            instance = new Red5Client(id, (Long) cd.get("creationTime"), null);
             instance.setAttribute(PERMISSIONS, cd.get(PERMISSIONS));
         }
         if (instance != null && cd.containsKey("attributes")) {
@@ -400,8 +400,8 @@ public class Client extends AttributeStore implements IClient {
      */
     @Override
     public boolean equals(Object obj) {
-        if (obj instanceof Client) {
-            return ((Client) obj).getId().equals(id);
+        if (obj instanceof Red5Client) {
+            return ((Red5Client) obj).getId().equals(id);
         }
         return false;
     }

@@ -240,20 +240,20 @@ public abstract class BaseConnection extends AttributeStore implements IConnecti
         if (log.isDebugEnabled()) {
             log.debug("initialize - client: {}", client);
         }
-        if (this.client != null && this.client instanceof Client && !this.client.equals(client)) {
+        if (this.client != null && this.client instanceof Red5Client && !this.client.equals(client)) {
             // unregister old client
             if (log.isTraceEnabled()) {
                 log.trace("Unregistering previous client: {}", this.client);
             }
-            ((Client) this.client).unregister(this, false);
+            ((Red5Client) this.client).unregister(this, false);
         }
         this.client = client;
-        if (this.client instanceof Client && !((Client) this.client).isRegistered(this)) {
+        if (this.client instanceof Red5Client && !((Red5Client) this.client).isRegistered(this)) {
             // register new client
             if (log.isTraceEnabled()) {
                 log.trace("Registering client: {}", this.client);
             }
-            ((Client) this.client).register(this);
+            ((Red5Client) this.client).register(this);
         }
     }
 
@@ -263,8 +263,8 @@ public abstract class BaseConnection extends AttributeStore implements IConnecti
         if (log.isTraceEnabled()) {
             log.trace("Unregistering previous client: {}", this.client);
         }
-        if (client != null && client instanceof Client) {
-            ((Client) this.client).unregister(this, true);
+        if (client != null && client instanceof Red5Client) {
+            ((Red5Client) this.client).unregister(this, true);
         } else {
             log.warn("Client is null or type is unexpected for: {}", sessionId);
         }
