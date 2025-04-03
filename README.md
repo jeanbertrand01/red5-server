@@ -29,3 +29,33 @@ En le renommant en **logger**, on indique clairement que c'est un attribut de la
 
 >2. changer le type ou le nombre de paramètres d’une méthode
 
+Dans la classe **BaseConnection.java** du paquage : **server.src.main.java.org.red5.server** : 
+
+Je change le type de retour de **void addListener(IConnectionListener listener)**, en **boolean addListener(IConnectionListener listener)** pour retourner true lorqu'elle a correctement ajouter un listener, et false sinon.
+
+on modifie aussi dans l'interface **IConnection.java** la methode **addListener(IConnectionListener listener)** en **boolean addListener(IConnectionListener listener)** .
+
+
+>3. créer des variables pour supprimer des nombres magiques.
+
+Je lance le script **detect_magic_number.sh**, pour analyser le projet.
+
+Resultat : je ne trouve aucun nombres magiques dans aucune classe.
+
+
+>4. supprimer du code mort
+
+On vas supprimer tout code avec la mention **@Deprecated**.
+
+- Je supprime dans **BaseConnection**, la methode **setId(int clientId)** 
+- Je supprime les methodes **getDeadlockGuardScheduler()**, **setDeadlockGuardScheduler(ThreadPoolTaskScheduler deadlockGuardScheduler)** de **RTMPConnection**.
+
+>5. Réorganiser une classe pour le code soit bien structuré, les variables d’instance en début de classe, puis méthodes publiques et enfin méthodes privées
+
+Je reorganise la classe **RTMPMinaTransport.java,(package : server.src.main.java.org.red5.server.net.rtmp)** les variables d'instances sont deja correctement mises au debut de la classe, les methodes **setters** et **getter** viennent ensuite, et les methodes privées suivent et enfin les methodes publiques a la fin.
+
+## 7 - MOYENNES MODIFICATIONS
+
+>1. réduire la complexité cyclomatique ou le nombre de lignes d’une méthode
+
+Je m'interrese a la methode **play(IPlayItem item, boolean withReset)** de la classe **PlayEngine.java, (package: common.src.main.java.org.red5.server.stream)**

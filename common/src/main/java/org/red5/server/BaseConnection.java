@@ -194,10 +194,12 @@ public abstract class BaseConnection extends AttributeStore implements IConnecti
     }
 
     /** {@inheritDoc} */
-    public void addListener(IConnectionListener listener) {
+    public boolean addListener(IConnectionListener listener) {
         if (connectionListeners != null) {
             connectionListeners.add(listener);
+            return true;
         }
+        return false;
     }
 
     /** {@inheritDoc} */
@@ -342,11 +344,6 @@ public abstract class BaseConnection extends AttributeStore implements IConnecti
     public int getId() {
         // handle the fact that a client id is a String
         return client != null ? client.getId().hashCode() : -1;
-    }
-
-    @Deprecated
-    public void setId(int clientId) {
-        log.warn("Setting of a client id is deprecated, use IClient to manipulate the id", new Exception("RTMPConnection.setId is deprecated"));
     }
 
     /**

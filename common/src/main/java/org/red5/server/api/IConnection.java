@@ -271,8 +271,9 @@ public interface IConnection extends ICoreObject, ICastingAttributeStore {
      * Adds a listener to this object
      *
      * @param listener connection listener
+     * @return 
      */
-    void addListener(IConnectionListener listener);
+    boolean addListener(IConnectionListener listener);
 
     /**
      * Removes the listener from this object
