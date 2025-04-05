@@ -150,6 +150,35 @@ public void addListener(IConnectionListener listener) throws ListenerAddExceptio
 
 >4. supprimer de la duplication de codes entre méthodes
 
+Les statistiques que me donne sonarqube, sur la duplication de code sont:
+
+- Densité : **3.3%**
+- Nombres de blocs de code identiques : **142**
+- Nombres de lignes de code identiques : **3443**
+- Nombres de classes identiques : **68**
+
+Je m'interesse a la classe **Aggregate.java (package:common.src.main.java.org.red5.server.net.rtmp.event)**, qui dans la methode **releaseInternal()** utilise la condition :
+
+```java
+if(data!=null){
+    
+}
+```
+ainsi que dans la methode **writeExternal(ObjectOutput out)**. 
+
+je factorise cette condition dans un methode **isDataNotNull()**.
+
+```java
+private static boolean isDataNotNull(Object data) {
+    return data != null;
+}
+```
+
+>5. ajouter un test pertinent
+
+
+
+
 
 
 

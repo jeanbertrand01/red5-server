@@ -206,7 +206,7 @@ public class Aggregate extends BaseEvent implements IoConstants, IStreamData<Agg
     /** {@inheritDoc} */
     @Override
     protected void releaseInternal() {
-        if (data != null) {
+        if (isDataNotNull(data)) {
             final IoBuffer localData = data;
             // null out the data first so we don't accidentally
             // return a valid reference first
@@ -220,11 +220,15 @@ public class Aggregate extends BaseEvent implements IoConstants, IStreamData<Agg
     public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
         super.readExternal(in);
         byte[] byteBuf = (byte[]) in.readObject();
-        if (byteBuf != null) {
+        if (isDataNotNull(data)) {
             data = IoBuffer.allocate(byteBuf.length);
             data.setAutoExpand(true);
             SerializeUtils.ByteArrayToByteBuffer(byteBuf, data);
         }
+    }
+
+    private static boolean isDataNotNull(Object data) {
+        return data != null;
     }
 
     @Override
