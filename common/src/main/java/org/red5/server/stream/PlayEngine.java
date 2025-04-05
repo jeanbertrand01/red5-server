@@ -594,6 +594,34 @@ public final class PlayEngine implements IFilter, IPushableConsumer, IPipeConnec
         configsDone = true;
     }
 
+
+    /**
+     * Sends a stream not found status message.
+     *
+     * @param item
+     *            The item to play
+     */
+    private final IMessage sendIMessage(long itemLength) throws IOException {
+        IMessage msg = null;
+        IMessageInput in = msgInReference.get();
+        msg = in.pullMessage();
+        if (msg instanceof RTMPMessage) {
+            // Only send first video frame
+            IRTMPEvent body = ((RTMPMessage) msg).getBody();
+            if (itemLength == 0) {
+                while (body != null && !(body instanceof VideoData)) {
+                    msg = in.pullMessage();
+                    if (msg != null && msg instanceof RTMPMessage) body = ((RTMPMessage) msg).getBody();
+                    else break;
+                }
+            }
+            if (body != null) 
+                // Adjust timestamp when playing lists 
+                body.setTimestamp(body.getTimestamp() + timestampOffset); 
+        }
+        return msg;
+    }
+
     /**
      * Performs the processes needed for VOD / pre-recorded streams.
      *
@@ -605,43 +633,20 @@ public final class PlayEngine implements IFilter, IPushableConsumer, IPipeConnec
      * @throws IOException
      */
     private final IMessage playVOD(boolean withReset, long itemLength) throws IOException {
-        IMessage msg = null;
         // change state
         subscriberStream.setState(StreamState.PLAYING);
-        if (withReset) {
-            releasePendingMessage();
-        }
+        if (withReset) releasePendingMessage();
+        
         sendVODInitCM(currentItem.get());
         // Don't use pullAndPush to detect IOExceptions prior to sending NetStream.Play.Start
         int start = (int) currentItem.get().getStart();
         if (start > 0) {
             streamOffset = sendVODSeekCM(start);
             // We seeked to the nearest keyframe so use real timestamp now
-            if (streamOffset == -1) {
-                streamOffset = start;
-            }
+            if (streamOffset == -1) streamOffset = start;
         }
-        IMessageInput in = msgInReference.get();
-        msg = in.pullMessage();
-        if (msg instanceof RTMPMessage) {
-            // Only send first video frame
-            IRTMPEvent body = ((RTMPMessage) msg).getBody();
-            if (itemLength == 0) {
-                while (body != null && !(body instanceof VideoData)) {
-                    msg = in.pullMessage();
-                    if (msg != null && msg instanceof RTMPMessage) {
-                        body = ((RTMPMessage) msg).getBody();
-                    } else {
-                        break;
-                    }
-                }
-            }
-            if (body != null) {
-                // Adjust timestamp when playing lists
-                body.setTimestamp(body.getTimestamp() + timestampOffset);
-            }
-        }
-        return msg;
+        
+        return sendIMessage(itemLength);
     }
 
     /**

@@ -45,7 +45,7 @@ Resultat : je ne trouve aucun nombres magiques dans aucune classe.
 
 >4. supprimer du code mort
 
-On vas supprimer tout code avec la mention **@Deprecated**.
+On vas supprimer du code avec la mention **@Deprecated**.
 
 - Je supprime dans **BaseConnection**, la methode **setId(int clientId)** 
 - Je supprime les methodes **getDeadlockGuardScheduler()**, **setDeadlockGuardScheduler(ThreadPoolTaskScheduler deadlockGuardScheduler)** de **RTMPConnection**.
@@ -58,4 +58,68 @@ Je reorganise la classe **RTMPMinaTransport.java,(package : server.src.main.java
 
 >1. réduire la complexité cyclomatique ou le nombre de lignes d’une méthode
 
-Je m'interrese a la methode **play(IPlayItem item, boolean withReset)** de la classe **PlayEngine.java, (package: common.src.main.java.org.red5.server.stream)**
+Je m'interrese a la methode **playVOD(boolean withReset, long itemLength)** de la classe **PlayEngine.java, (package: common.src.main.java.org.red5.server.stream)**, en reduisant le nombre de lignes de la methode.
+
+les blocs
+
+```java
+if(){
+    // 1 ligne de code
+}
+```
+
+deviennent
+
+```java
+if() // 1 ligne de code
+```
+
+>2. décomposer une méthode qui à la fois retourne des informations et modifie l’état d’un objet
+
+Je decompose la methode **playVOD(boolean withReset, long itemLength)** de la classe **PlayEngine.java, (package: common.src.main.java.org.red5.server.stream)** en 2 methodes.
+
+```java
+private final IMessage sendIMessage(long itemLength) throws IOException {
+        IMessage msg = null;
+        IMessageInput in = msgInReference.get();
+        msg = in.pullMessage();
+        if (msg instanceof RTMPMessage) {
+            // Only send first video frame
+            IRTMPEvent body = ((RTMPMessage) msg).getBody();
+            if (itemLength == 0) {
+                while (body != null && !(body instanceof VideoData)) {
+                    msg = in.pullMessage();
+                    if (msg != null && msg instanceof RTMPMessage) body = ((RTMPMessage) msg).getBody();
+                    else break;
+                }
+            }
+            if (body != null) 
+                // Adjust timestamp when playing lists 
+                body.setTimestamp(body.getTimestamp() + timestampOffset); 
+        }
+        return msg;
+    }
+```
+et 
+
+```java
+private final IMessage playVOD(boolean withReset, long itemLength) throws IOException {
+        // change state
+        subscriberStream.setState(StreamState.PLAYING);
+        if (withReset) releasePendingMessage();
+        
+        sendVODInitCM(currentItem.get());
+        // Don't use pullAndPush to detect IOExceptions prior to sending NetStream.Play.Start
+        int start = (int) currentItem.get().getStart();
+        if (start > 0) {
+            streamOffset = sendVODSeekCM(start);
+            // We seeked to the nearest keyframe so use real timestamp now
+            if (streamOffset == -1) streamOffset = start;
+        }
+        
+        return sendIMessage(itemLength);
+    }
+```
+
+>3. remplacer le fait qu’une méthode retourne un code d’erreur par le fait qu’elle lève une exception
+
