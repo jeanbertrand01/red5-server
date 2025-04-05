@@ -202,6 +202,16 @@ public abstract class BaseConnection extends AttributeStore implements IConnecti
         return false;
     }
 
+    /**
+     * public void addListener(IConnectionListener listener) throws ListenerAddException {
+
+        if (connectionListeners != null) connectionListeners.add(listener);
+
+        else throw new ListenerAddException("Could not add listener");
+        } 
+    */  
+     
+
     /** {@inheritDoc} */
     public void removeListener(IConnectionListener listener) {
         if (connectionListeners != null) {

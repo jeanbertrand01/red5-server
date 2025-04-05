@@ -29,7 +29,7 @@ En le renommant en **logger**, on indique clairement que c'est un attribut de la
 
 >2. changer le type ou le nombre de paramètres d’une méthode
 
-Dans la classe **BaseConnection.java** du paquage : **server.src.main.java.org.red5.server** : 
+Dans la classe **BaseConnection.java (package:server.src.main.java.org.red5.server.net)** : 
 
 Je change le type de retour de **void addListener(IConnectionListener listener)**, en **boolean addListener(IConnectionListener listener)** pour retourner true lorqu'elle a correctement ajouter un listener, et false sinon.
 
@@ -47,12 +47,12 @@ Resultat : je ne trouve aucun nombres magiques dans aucune classe.
 
 On vas supprimer du code avec la mention **@Deprecated**.
 
-- Je supprime dans **BaseConnection**, la methode **setId(int clientId)** 
-- Je supprime les methodes **getDeadlockGuardScheduler()**, **setDeadlockGuardScheduler(ThreadPoolTaskScheduler deadlockGuardScheduler)** de **RTMPConnection**.
+- Je supprime dans **BaseConnection.java (package:server.src.main.java.org.red5.server.net)**, la methode **setId(int clientId)** 
+- Je supprime les methodes **getDeadlockGuardScheduler()**, **setDeadlockGuardScheduler(ThreadPoolTaskScheduler deadlockGuardScheduler)** de **RTMPConnection.java (package:common.src.main.java.org.red5.server.net.rtmp)**.
 
 >5. Réorganiser une classe pour le code soit bien structuré, les variables d’instance en début de classe, puis méthodes publiques et enfin méthodes privées
 
-Je reorganise la classe **RTMPMinaTransport.java,(package : server.src.main.java.org.red5.server.net.rtmp)** les variables d'instances sont deja correctement mises au debut de la classe, les methodes **setters** et **getter** viennent ensuite, et les methodes privées suivent et enfin les methodes publiques a la fin.
+Je réorganise la classe **RTMPMinaTransport.java,(package : server.src.main.java.org.red5.server.net.rtmp)** les variables d'instances sont deja correctement mises au debut de la classe, les methodes **setters** et **getter** viennent ensuite, et les methodes privées suivent et enfin les methodes publiques a la fin.
 
 ## 7 - MOYENNES MODIFICATIONS
 
@@ -80,46 +80,76 @@ Je decompose la methode **playVOD(boolean withReset, long itemLength)** de la cl
 
 ```java
 private final IMessage sendIMessage(long itemLength) throws IOException {
-        IMessage msg = null;
-        IMessageInput in = msgInReference.get();
-        msg = in.pullMessage();
-        if (msg instanceof RTMPMessage) {
-            // Only send first video frame
-            IRTMPEvent body = ((RTMPMessage) msg).getBody();
-            if (itemLength == 0) {
-                while (body != null && !(body instanceof VideoData)) {
-                    msg = in.pullMessage();
-                    if (msg != null && msg instanceof RTMPMessage) body = ((RTMPMessage) msg).getBody();
-                    else break;
-                }
+    IMessage msg = null;
+    IMessageInput in = msgInReference.get();
+    msg = in.pullMessage();
+    if (msg instanceof RTMPMessage) {
+        // Only send first video frame
+        IRTMPEvent body = ((RTMPMessage) msg).getBody();
+        if (itemLength == 0) {
+            while (body != null && !(body instanceof VideoData)) {
+                msg = in.pullMessage();
+                if (msg != null && msg instanceof RTMPMessage) body = ((RTMPMessage) msg).getBody();
+                else break;
             }
-            if (body != null) 
-                // Adjust timestamp when playing lists 
-                body.setTimestamp(body.getTimestamp() + timestampOffset); 
         }
-        return msg;
+        if (body != null) 
+            // Adjust timestamp when playing lists 
+            body.setTimestamp(body.getTimestamp() + timestampOffset); 
     }
+    return msg;
+}
 ```
 et 
 
 ```java
 private final IMessage playVOD(boolean withReset, long itemLength) throws IOException {
-        // change state
-        subscriberStream.setState(StreamState.PLAYING);
-        if (withReset) releasePendingMessage();
+    // change state
+    subscriberStream.setState(StreamState.PLAYING);
+    if (withReset) releasePendingMessage();
         
-        sendVODInitCM(currentItem.get());
-        // Don't use pullAndPush to detect IOExceptions prior to sending NetStream.Play.Start
-        int start = (int) currentItem.get().getStart();
-        if (start > 0) {
-            streamOffset = sendVODSeekCM(start);
-            // We seeked to the nearest keyframe so use real timestamp now
-            if (streamOffset == -1) streamOffset = start;
-        }
-        
-        return sendIMessage(itemLength);
+    sendVODInitCM(currentItem.get());
+    // Don't use pullAndPush to detect IOExceptions prior to sending NetStream.Play.Start
+    int start = (int) currentItem.get().getStart();
+    if (start > 0) {
+        streamOffset = sendVODSeekCM(start);
+        // We seeked to the nearest keyframe so use real timestamp now
+        if (streamOffset == -1) streamOffset = start;
     }
+        
+    return sendIMessage(itemLength);
+}
 ```
 
 >3. remplacer le fait qu’une méthode retourne un code d’erreur par le fait qu’elle lève une exception
+
+Dans la classe **BaseConnection.java (package:server.src.main.java.org.red5.server.net)** :
+
+La methode :
+
+```java
+public boolean addListener(IConnectionListener listener) {
+    if (connectionListeners != null) {
+        connectionListeners.add(listener);
+        return true;
+    }
+    return false;
+}
+```
+
+retourne un boolean indiquant si la methode a correctement ajouter un listener ou non. je modifie la methode pour qu'elle lance une exception si elle n'a pas pu ajouter le listener.
+
+```java
+public void addListener(IConnectionListener listener) throws ListenerAddException {
+
+    if (connectionListeners != null) connectionListeners.add(listener);
+
+    else throw new ListenerAddException("Could not add listener");
+}
+```
+
+>4. supprimer de la duplication de codes entre méthodes
+
+
+
 
