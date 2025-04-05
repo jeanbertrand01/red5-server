@@ -137,7 +137,7 @@ public boolean addListener(IConnectionListener listener) {
 }
 ```
 
-retourne un boolean indiquant si la methode a correctement ajouter un listener ou non. je modifie la methode pour qu'elle lance une exception si elle n'a pas pu ajouter le listener.
+retourne un boolean indiquant si la methode a correctement ajouter un listener ou non. je modifie la methode pour qu'elle lance une exception si elle ne peut pas ajouter le listener.
 
 ```java
 public void addListener(IConnectionListener listener) throws ListenerAddException {
