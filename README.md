@@ -176,6 +176,164 @@ private static boolean isDataNotNull(Object data) {
 
 >5. ajouter un test pertinent
 
+Pour ajouter un test pertinent, concentrons-nous sur la méthode refactorisée `isDataNotNull` dans la classe **Aggregate.java**. Voici un exemple de test unitaire pour cette méthode :
+
+### Exemple de test unitaire
+
+```java
+package org.red5.server.net.rtmp.event;
+
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
+
+import org.junit.Test;
+
+public class AggregateTest {
+
+    @Test
+    public void testIsDataNotNull() {
+        // Cas où l'objet est non null
+        Object nonNullData = new Object();
+        assertTrue("L'objet non null devrait retourner true", Aggregate.isDataNotNull(nonNullData));
+
+        // Cas où l'objet est null
+        Object nullData = null;
+        assertFalse("L'objet null devrait retourner false", Aggregate.isDataNotNull(nullData));
+    }
+}
+```
+
+## 8 - GRANDES MODIFICATIONS
+
+>1. décomposer une god classe
+
+La classe **PlayEngine.java (package:common.src.main.java.org.red5.server.stream)** est un **god class**. Je m'interresse donc a la decomposition de cette classe.
+
+---
+
+### Proposition de décomposition pour la classe `PlayEngine`
+
+#### Problèmes identifiés :
+- La méthode `playVOD` gère plusieurs responsabilités :
+  - Modifier l'état du flux (`subscriberStream.setState`).
+  - Libérer des messages en attente (`releasePendingMessage`).
+  - Initialiser la lecture VOD (`sendVODInitCM`).
+  - Gérer les sauts dans le flux vidéo (`sendVODSeekCM`).
+  - Envoyer des messages (`sendIMessage`).
+
+#### Décomposition proposée :
+Nous pouvons extraire ces responsabilités dans des classes ou méthodes spécialisées.
+
+---
+
+#### 1. **Classe `StreamStateManager`** :
+Responsable de la gestion des états du flux.
+
+```java
+public class StreamStateManager {
+    public void setStreamState(SubscriberStream stream, StreamState state) {
+        stream.setState(state);
+    }
+}
+```
+
+---
+
+#### 2. **Classe `MessageManager`** :
+Responsable de la gestion des messages en attente et de l'envoi des messages.
+
+```java
+public class MessageManager {
+    public void releasePendingMessage() {
+        // Implémentation pour libérer les messages en attente
+    }
+
+    public IMessage sendIMessage(IMessageInput input, long itemLength, long timestampOffset) throws IOException {
+        IMessage msg = input.pullMessage();
+        if (msg instanceof RTMPMessage) {
+            IRTMPEvent body = ((RTMPMessage) msg).getBody();
+            if (itemLength == 0) {
+                while (body != null && !(body instanceof VideoData)) {
+                    msg = input.pullMessage();
+                    if (msg != null && msg instanceof RTMPMessage) {
+                        body = ((RTMPMessage) msg).getBody();
+                    } else {
+                        break;
+                    }
+                }
+            }
+            if (body != null) {
+                body.setTimestamp(body.getTimestamp() + timestampOffset);
+            }
+        }
+        return msg;
+    }
+}
+```
+
+---
+
+#### 3. **Classe `VODInitializer`** :
+Responsable de l'initialisation et de la gestion des sauts dans le flux VOD.
+
+```java
+public class VODInitializer {
+    public void sendVODInitCM(CurrentItem currentItem) {
+        // Implémentation pour initialiser la lecture VOD
+    }
+
+    public long sendVODSeekCM(CurrentItem currentItem, int start) {
+        // Implémentation pour gérer les sauts dans le flux
+        return start; // Exemple de retour
+    }
+}
+```
+
+---
+
+#### 4. **Classe refactorisée `PlayEngine`** :
+La classe `PlayEngine` délègue désormais les responsabilités aux classes spécialisées.
+
+```java
+public class PlayEngine {
+    private StreamStateManager stateManager = new StreamStateManager();
+    private MessageManager messageManager = new MessageManager();
+    private VODInitializer vodInitializer = new VODInitializer();
+
+    public IMessage playVOD(boolean withReset, long itemLength, SubscriberStream subscriberStream, CurrentItem currentItem, IMessageInput input, long timestampOffset) throws IOException {
+        // Modifier l'état du flux
+        stateManager.setStreamState(subscriberStream, StreamState.PLAYING);
+
+        // Libérer les messages en attente si nécessaire
+        if (withReset) {
+            messageManager.releasePendingMessage();
+        }
+
+        // Initialiser la lecture VOD
+        vodInitializer.sendVODInitCM(currentItem);
+
+        // Gérer les sauts dans le flux
+        int start = (int) currentItem.getStart();
+        long streamOffset = 0;
+        if (start > 0) {
+            streamOffset = vodInitializer.sendVODSeekCM(currentItem, start);
+            if (streamOffset == -1) {
+                streamOffset = start;
+            }
+        }
+
+        // Envoyer les messages
+        return messageManager.sendIMessage(input, itemLength, timestampOffset);
+    }
+}
+```
+
+---
+
+### Avantages de la décomposition :
+1. **Responsabilités séparées** : Chaque classe a une responsabilité unique, ce qui améliore la lisibilité et la maintenabilité.
+2. **Réutilisabilité** : Les classes comme `MessageManager` ou `StreamStateManager` peuvent être réutilisées ailleurs dans le projet.
+3. **Testabilité** : Les classes plus petites sont plus faciles à tester unitairement.
 
 
 
