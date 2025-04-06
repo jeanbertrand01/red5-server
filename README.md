@@ -351,66 +351,68 @@ grep -rnw . -e "static class" --include="*.java"
 
 j'identifie les classes statics, et je les supprime.
 
-- classe **/extras/audio/mp3/src/main/java/org/red5/io/mp3/impl/MP3Stream.java**, ligne 351 : je supprime la classe :
+par exemple :
+
+- la classe **/extras/audio/mp3/src/main/java/org/red5/io/mp3/impl/MP3Stream.java**, ligne 351 : je supprime la classe :
 
 ```java
 /**
-     * A class representing the bit field of an MPEG header. It allows convenient access to specific bit groups.
+ * A class representing the bit field of an MPEG header. It allows convenient access to specific bit groups.
+ */
+private static class HeaderBitField {
+    /** The internal value. */
+    private int value;
+
+    /**
+     * Adds a byte to this field.
+     *
+     * @param b
+     *            the byte to be added
      */
-    private static class HeaderBitField {
-        /** The internal value. */
-        private int value;
-
-        /**
-         * Adds a byte to this field.
-         *
-         * @param b
-         *            the byte to be added
-         */
-        public void add(int b) {
-            value <<= 8;
-            value |= b;
-        }
-
-        /**
-         * Returns the value of the bit group from the given start and end index. E.g. ''from'' = 0, ''to'' = 3 will return the value of the first 4 bits.
-         *
-         * @param the
-         *            from index
-         * @param to
-         *            the to index
-         * @return the value of this group of bits
-         */
-        public int get(int from, int to) {
-            int shiftVal = value >> from;
-            int mask = (1 << (to - from + 1)) - 1;
-            return shiftVal & mask;
-        }
-
-        /**
-         * Returns the value of the bit with the given index. The bit index is 0-based. Result is either 0 or 1, depending on the value of this bit.
-         *
-         * @param bit
-         *            the bit index
-         * @return the value of this bit
-         */
-        public int get(int bit) {
-            return get(bit, bit);
-        }
-
-        /**
-         * Returns the internal value of this field as an array. The array contains 3 bytes.
-         *
-         * @return the internal value of this field as int array
-         */
-        public byte[] toArray() {
-            byte[] result = new byte[3];
-            result[0] = (byte) get(16, 23);
-            result[1] = (byte) get(8, 15);
-            result[2] = (byte) get(0, 7);
-            return result;
-        }
+    public void add(int b) {
+        value <<= 8;
+        value |= b;
     }
+
+    /**
+     * Returns the value of the bit group from the given start and end index. E.g. ''from'' = 0, ''to'' = 3 will return the value of the first 4 bits.
+     *
+     * @param the
+     *            from index
+     * @param to
+     *            the to index
+     * @return the value of this group of bits
+     */
+    public int get(int from, int to) {
+        int shiftVal = value >> from;
+        int mask = (1 << (to - from + 1)) - 1;
+        return shiftVal & mask;
+    }
+
+    /**
+     * Returns the value of the bit with the given index. The bit index is 0-based. Result is either 0 or 1, depending on the value of this bit.
+     *
+     * @param bit
+     *            the bit index
+     * @return the value of this bit
+     */
+    public int get(int bit) {
+        return get(bit, bit);
+    }
+
+    /**
+     * Returns the internal value of this field as an array. The array contains 3 bytes.
+     *
+     * @return the internal value of this field as int array
+     */
+    public byte[] toArray() {
+        byte[] result = new byte[3];
+        result[0] = (byte) get(16, 23);
+        result[1] = (byte) get(8, 15);
+        result[2] = (byte) get(0, 7);
+        return result;
+    }
+}
 ```
 
 ainsi de suite pour les autres classes statics.
